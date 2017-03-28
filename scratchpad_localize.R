@@ -34,10 +34,27 @@ show_single_appliance_histogram(dat_app,windowsize)
 
 
 # visualise usage of single applaince daywise in particualar time window
-df_sub <- df_xts["2014-06-01/2014-08-30"]
+df_sub <- df_xts["2014-06-01/2014-06-20"]
 appliances # display available applainces
 dat_app <- df_sub$refrigerator1
-windowsize <- 30 # no. of days
+hour_start = 18
+hour_end =  6
+show_appliance_consumption_trace(dat_app,hour_start,hour_end)
+
+show_appliance_consumption_trace <- function(dat,hour_start,hour_end) {
+#dat <- df_sub$refrigerator1
+names(dat) <- "Power"
+sel_dat <- dat[.indexhour(dat) >= hour_start | .indexhour(dat) < hour_end,]
+sel_dat$day <- lubridate::day(index(sel_dat))
+day_dat <- split.xts(sel_dat,"days",k=1)
+day_dat <- lapply(day_dat,function(x) { #keep same time stamp  for all days
+  index(x) <- index(day_dat[[1]]) 
+  return(x)})
+df_long <- do.call(rbind,day_dat)
+ggplot(fortify(df_long),aes(Index,Power)) + geom_line() + facet_wrap(~day) +
+ scale_x_datetime(labels=date_format("%H",tz="Asia/Kolkata"))
+
+}
 
 
 
